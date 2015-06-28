@@ -6,6 +6,8 @@ ifdef EDGELONG
 INTE = -DEDGELONG
 endif
 
+INTE = -DWEIGHTED
+
 #compilers
 ifdef CILK
 PCC = g++

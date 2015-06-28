@@ -56,31 +56,39 @@ struct BF_Vertex_F {
 
 template <class vertex>
 void Compute(graph<vertex>& GA, commandLine P) {
-  long start = P.getOptionLongValue("-r",0);
+  long ratio = P.getOptionLongValue("-r",1000);
   long n = GA.n;
-  //initialize ShortestPathLen to "infinity"
-  intE* ShortestPathLen = newA(intE,n);
-  {parallel_for(long i=0;i<n;i++) ShortestPathLen[i] = INT_MAX/2;}
-  ShortestPathLen[start] = 0;
+  printf("Nodes: %d Ratio %d\n", n, ratio);
 
-  int* Visited = newA(int,n);
-  {parallel_for(long i=0;i<n;i++) Visited[i] = 0;}
+  for(size_t i(0); i < n; ++i) {
+     if(i % ratio != 0)
+        continue;
+     intE* ShortestPathLen = newA(intE,n);
+     int* Visited = newA(int,n);
 
-  vertexSubset Frontier(n,start); //initial frontier
+     //initialize ShortestPathLen to "infinity"
+     {parallel_for(long i=0;i<n;i++) ShortestPathLen[i] = INT_MAX/2;}
+     ShortestPathLen[i] = 0;
 
-  long round = 0;
-  while(!Frontier.isEmpty()){
-    if(round == n) {
-      //negative weight cycle
-      {parallel_for(long i=0;i<n;i++) ShortestPathLen[i] = -(INT_E_MAX/2);}
-      break;
-    }
-    vertexSubset output = edgeMap(GA, Frontier, BF_F(ShortestPathLen,Visited), GA.m/20, DENSE_FORWARD);
-    vertexMap(output,BF_Vertex_F(Visited));
-    Frontier.del();
-    Frontier = output;
-    round++;
-  } 
-  Frontier.del(); free(Visited);
-  free(ShortestPathLen);
+     {parallel_for(long i=0;i<n;i++) Visited[i] = 0;}
+
+     vertexSubset Frontier(n,i); //initial frontier
+
+     long round = 0;
+     while(!Frontier.isEmpty()){
+        if(round == n) {
+           //negative weight cycle
+           {parallel_for(long i=0;i<n;i++) ShortestPathLen[i] = -(INT_E_MAX/2);}
+           break;
+        }
+        vertexSubset output = edgeMap(GA, Frontier, BF_F(ShortestPathLen,Visited), GA.m/20, DENSE_FORWARD);
+        vertexMap(output,BF_Vertex_F(Visited));
+        Frontier.del();
+        Frontier = output;
+        round++;
+     } 
+     Frontier.del();
+     free(Visited);
+     free(ShortestPathLen);
+  }
 }
